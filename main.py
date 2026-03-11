@@ -148,6 +148,6 @@ if __name__ == "__main__":
         print("\nENLACES ENCONTRADOS:")
         for doc, links in links_found.items():
             print(f"\n {doc} ({len(links)} Enlaces encontrados en este pdf):")
-            for l in links[:3]: 
+            for l in links: 
                 print(f"  - {l}")
         print("\nProceso finalizado")
