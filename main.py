@@ -25,7 +25,11 @@ def setup_folders():
 def run_grobid():
     """Envía los PDFs al contenedor de Grobid para obtener XML/TEI."""
     print("Iniciando procesamiento con Grobid (esto puede tardar)...")
-    client = GrobidClient(config_path=None, check_server=True)
+    client = GrobidClient(
+        grobid_server=CONFIG["grobid_server"],
+        timeout=CONFIG["timeout"],
+        config_path=None, 
+        check_server=True)
     
     # Procesamos todos los documentos
     client.process("processFulltextDocument", 
@@ -113,7 +117,7 @@ def generate_viz(abstract_text, stats):
         plt.imshow(wc, interpolation='bilinear')
         plt.axis('off')
         plt.title("Nube de Conceptos (Abstracts)")
-        plt.savefig('output/keyword_cloud.png')
+        plt.savefig(os.path.join(CONFIG["output_path"], 'keyword_cloud.png'))
         plt.close()
 
     # Barras
@@ -123,7 +127,7 @@ def generate_viz(abstract_text, stats):
     plt.title('Figuras detectadas por Artículo')
     plt.xticks(rotation=45, ha='right')
     plt.tight_layout()
-    plt.savefig('output/figures_chart.png')
+    plt.savefig(os.path.join(CONFIG["output_path"], 'figures_chart.png'))
     plt.close()
 
 # --- BLOQUE PRINCIPAL ---
@@ -133,7 +137,11 @@ if __name__ == "__main__":
     if not os.listdir(CONFIG["input_path"]):
         print("Error: La carpeta /data está vacía. Mete tus PDFs ahí.")
     else:
-        run_grobid()
+        try:
+            run_grobid()
+        except Exception as e:
+            print("Error: No se pudo conectar con Grobid. Asegúrese de que el contenedor Docker está corriendo")
+            exit(1)
         text, figures_stats, links_found = analyze_data()
         generate_viz(text, figures_stats)
         
