@@ -31,12 +31,12 @@ sudo apt install python3-venv
 python3 -m venv venv
 source venv/bin/activate
 
-# Instalar librerías (puedes usar uv o pip clásico, elige uno)
+# Instalar librerías (puedes usar uv o pip, elige uno valen ambos)
 uv pip install -r requirements.txt
 # pip install -r requirements.txt
 ```
 ### 3. Ejecución del Proyecto
-**Paso A:** Iniciar el servidor Grobid.Inicia el contenedor de Docker para levantar la API local:
+**Paso A:** Iniciar el servidor Grobid. Inicia el contenedor de Docker para levantar la API local:
 
 ```bash
 docker run -t --rm -p 8070:8070 grobid/grobid:0.8.0
