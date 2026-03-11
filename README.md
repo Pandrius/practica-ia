@@ -1,3 +1,4 @@
+ DOI: 10.5281/zenodo.18965916
 # Práctica IA: Extracción de Metadatos con Grobid
 
 Este proyecto implementa un pipeline de extracción de texto y metadatos científicos (figuras y enlaces explícitos) a partir de artículos en formato PDF utilizando Grobid y Python.

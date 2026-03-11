@@ -1,0 +1,18 @@
+{
+    "@context": "https://w3id.org/codemeta/3.0",
+    "applicationCategory": "SoftwareSourceCode",
+    "codeRepository": "https://github.com/Pandrius/practica-ia.git",
+    "dateCreated": "2026-03-10",
+    "dateModified": "2026-03-11",
+    "datePublished": "2026-03-11",
+    "description": "Pipeline de extracción de metadatos y análisis de artículos científicos (PDF) mediante Grobid y Python.",
+    "downloadUrl": "https://github.com/Pandrius/practica-ia/archive/refs/heads/main.zip",
+    "identifier": "https://doi.org/10.5281/zenodo.1896591",
+    "license": "https://spdx.org/licenses/Apache-2.0",
+    "name": "practica-ia",
+    "operatingSystem": "Linux",
+    "programmingLanguage": "Python 3",
+    "runtimePlatform": "Docker",
+    "version": "1.0.0",
+    "@type": "SoftwareSourceCode"
+}
