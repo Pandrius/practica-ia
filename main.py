@@ -19,12 +19,12 @@ def setup_folders():
     for path in [CONFIG["input_path"], CONFIG["output_path"]]:
         if not os.path.exists(path):
             os.makedirs(path)
-            print(f" Carpeta creada: {path}")
+            print(f"Carpeta creada: {path}")
 
 # --- 2. PROCESAMIENTO CON GROBID ---
 def run_grobid():
     """Envía los PDFs al contenedor de Grobid para obtener XML/TEI."""
-    print(" Iniciando procesamiento con Grobid (esto puede tardar)...")
+    print("Iniciando procesamiento con Grobid (esto puede tardar)...")
     client = GrobidClient(config_path=None, check_server=True)
     
     # Procesamos todos los documentos
@@ -33,7 +33,7 @@ def run_grobid():
                    output=CONFIG["output_path"], 
                    consolidate_citations=False, 
                    force=True)
-    print(" Procesamiento completado. Archivos XML generados en /output.")
+    print("Procesamiento completado. Archivos XML generados en /output.")
 
 # --- Extracción de Links ---
 def extract_links(soup):
@@ -113,7 +113,7 @@ def generate_viz(abstract_text, stats):
         plt.imshow(wc, interpolation='bilinear')
         plt.axis('off')
         plt.title("Nube de Conceptos (Abstracts)")
-        plt.savefig('keyword_cloud.png')
+        plt.savefig('output/keyword_cloud.png')
         plt.close()
 
     # Barras
@@ -123,7 +123,7 @@ def generate_viz(abstract_text, stats):
     plt.title('Figuras detectadas por Artículo')
     plt.xticks(rotation=45, ha='right')
     plt.tight_layout()
-    plt.savefig('figures_chart.png')
+    plt.savefig('output/figures_chart.png')
     plt.close()
 
 # --- BLOQUE PRINCIPAL ---
@@ -131,17 +131,15 @@ if __name__ == "__main__":
     setup_folders()
     
     if not os.listdir(CONFIG["input_path"]):
-        print(" Error: La carpeta /data está vacía. Mete tus PDFs ahí.")
+        print("Error: La carpeta /data está vacía. Mete tus PDFs ahí.")
     else:
         run_grobid()
         text, figures_stats, links_found = analyze_data()
         generate_viz(text, figures_stats)
         
-        print("\n ENLACES ENCONTRADOS (Solo explícitos en el texto):")
+        print("\nENLACES ENCONTRADOS:")
         for doc, links in links_found.items():
-            print(f"\n {doc} ({len(links)} identificados):")
-            # --- Filtro visual de terminal (solo mostramos 3) ---
+            print(f"\n {doc} ({len(links)} Enlaces encontrados en este pdf):")
             for l in links[:3]: 
                 print(f"  - {l}")
-        
-        print("\n Proceso finalizado con éxito. Listo para entregar.")
+        print("\nProceso finalizado")

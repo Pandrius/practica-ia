@@ -7,7 +7,14 @@
     "datePublished": "2026-03-11",
     "description": "Pipeline de extracción de metadatos y análisis de artículos científicos (PDF) mediante Grobid y Python.",
     "downloadUrl": "https://github.com/Pandrius/practica-ia/archive/refs/heads/main.zip",
-    "identifier": "https://doi.org/10.5281/zenodo.1896591",
+    "identifier": "https://doi.org/10.5281/zenodo.18965916",
+    "author": [
+        {
+            "@type": "Person",
+            "givenName": "Andrés",
+            "familyName": "Pecker Matesanz"
+        }
+    ],
     "license": "https://spdx.org/licenses/Apache-2.0",
     "name": "practica-ia",
     "operatingSystem": "Linux",
