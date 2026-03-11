@@ -19,25 +19,65 @@ def setup_folders():
     for path in [CONFIG["input_path"], CONFIG["output_path"]]:
         if not os.path.exists(path):
             os.makedirs(path)
-            print(f"Carpeta creada: {path}")
+            print(f" Carpeta creada: {path}")
 
-# --- 2. PROCESAMIENTO CON GROBID (Reproducibilidad) ---
+# --- 2. PROCESAMIENTO CON GROBID ---
 def run_grobid():
     """Envía los PDFs al contenedor de Grobid para obtener XML/TEI."""
-    print("Iniciando procesamiento con Grobid (esto puede tardar)...")
+    print(" Iniciando procesamiento con Grobid (esto puede tardar)...")
     client = GrobidClient(config_path=None, check_server=True)
     
-    # Procesamos todos los documentos de la carpeta data
+    # Procesamos todos los documentos
     client.process("processFulltextDocument", 
                    CONFIG["input_path"], 
                    output=CONFIG["output_path"], 
-                   consolidate_citations=True, 
+                   consolidate_citations=False, 
                    force=True)
-    print("Procesamiento completado. Archivos XML generados en /output.")
+    print(" Procesamiento completado. Archivos XML generados en /output.")
 
-# --- 3. EXTRACCIÓN Y ANÁLISIS (Datos procesables por máquinas) ---
+# --- Extracción de Links ---
+def extract_links(soup):
+    """Extrae URLs y DOIs escritos en el PDF."""
+    found = []
+
+    # 1. Capturar URLs normales (páginas web, repositorios)
+    for tag in soup.find_all(["ptr", "ref"]):
+        if tag.has_attr("target"):
+            found.append(tag["target"])
+        elif tag.get("type") == "url":
+            found.append(tag.get_text())
+
+    # 2. Capturar DOIs
+    for idno in soup.find_all("idno", type="DOI"):
+        doi_clean = idno.get_text().strip()
+        if doi_clean:
+            # Los convertimos a enlace web para que la salida sea uniforme
+            found.append(f"https://doi.org/{doi_clean}")
+
+    # 3. Data Cleaning
+    clean_list = []
+    for item in found:
+        c = item.strip()
+        
+        # Elimina años pegados al final del link
+        c = c.split(',')[0]
+        
+        # Elimina paginación extra como "71pp"
+        if "arxiv.org/abs/" in c.lower():
+            c = re.sub(r'(arxiv\.org/abs/\d{4}\.\d{4,5}(?:v\d+)?).*', r'\1', c, flags=re.IGNORECASE)
+        
+        # C. Elimina puntuacion residual
+        c = c.rstrip('.,;:)"\'-')
+        
+        # D. Filtrar: Aceptar solo enlaces HTTP válidos y elimina el enlace del repo de Grobid
+        if c.startswith("http") and "github.com/kermitt2/grobid" not in c:
+            clean_list.append(c)
+                
+    return list(set(clean_list))
+
+# --- 3. EXTRACCIÓN Y ANÁLISIS ---
 def analyze_data():
-    """Parsea los archivos XML para extraer abstracts, figuras y links."""
+    """Parsea los archivos XML para extraer abstracts, figuras y links limpios."""
     all_abstracts = ""
     stats = {"filenames": [], "figures": []}
     all_links = {}
@@ -47,28 +87,26 @@ def analyze_data():
             with open(os.path.join(CONFIG["output_path"], file), 'r', encoding='utf-8') as f:
                 soup = BeautifulSoup(f, 'xml')
                 
-                # A. Extraer Abstract (para Nube de Palabras)
+                # Abstract (para Nube de Palabras)
                 abstract = soup.find('abstract')
                 if abstract:
                     all_abstracts += abstract.get_text() + " "
                 
-                # B. Contar Figuras (para Gráfico de Barras)
+                # Contar Figuras (para Gráfico de Barras)
                 figure_count = len(soup.find_all('figure'))
-                stats["filenames"].append(file[:15] + "...") # Nombre corto
+                stats["filenames"].append(file[:15] + "...") 
                 stats["figures"].append(figure_count)
                 
-                # C. Extraer Enlaces/URLs
-                links = [ptr['target'] for ptr in soup.find_all('ptr', target=True)]
-                links += [ref.get_text() for ref in soup.find_all('ref', type='url')]
-                all_links[file] = list(set(links)) # Eliminar duplicados
+                # Extraer Enlaces (usando la función estricta)
+                all_links[file] = extract_links(soup)
 
     return all_abstracts, stats, all_links
 
-# --- 4. VISUALIZACIÓN (Comunicación de Resultados) ---
+# --- 4. VISUALIZACIÓN ---
 def generate_viz(abstract_text, stats):
-    """Genera la nube de palabras y el gráfico de barras."""
+    #Genera la nube de palabras y el gráfico de barras
     
-    # Nube de Palabras
+    # Nube
     if abstract_text.strip():
         wc = WordCloud(width=800, height=400, background_color='white').generate(abstract_text)
         plt.figure(figsize=(10, 5))
@@ -76,9 +114,9 @@ def generate_viz(abstract_text, stats):
         plt.axis('off')
         plt.title("Nube de Conceptos (Abstracts)")
         plt.savefig('keyword_cloud.png')
-        print("Nube de palabras guardada como 'keyword_cloud.png'")
+        plt.close()
 
-    # Gráfico de Figuras
+    # Barras
     plt.figure(figsize=(12, 6))
     plt.bar(stats["filenames"], stats["figures"], color='teal')
     plt.ylabel('Número de Figuras')
@@ -86,24 +124,24 @@ def generate_viz(abstract_text, stats):
     plt.xticks(rotation=45, ha='right')
     plt.tight_layout()
     plt.savefig('figures_chart.png')
-    print(" Gráfico de figuras guardado como 'figures_chart.png'")
+    plt.close()
 
 # --- BLOQUE PRINCIPAL ---
 if __name__ == "__main__":
     setup_folders()
     
-    # Verificar si hay archivos en data
     if not os.listdir(CONFIG["input_path"]):
-        print("Error: La carpeta /data está vacía. Mete tus 10 PDFs ahí.")
+        print(" Error: La carpeta /data está vacía. Mete tus PDFs ahí.")
     else:
         run_grobid()
         text, figures_stats, links_found = analyze_data()
         generate_viz(text, figures_stats)
         
-        print("\n ENLACES ENCONTRADOS:")
+        print("\n ENLACES ENCONTRADOS (Solo explícitos en el texto):")
         for doc, links in links_found.items():
-            print(f"\n{doc}:")
-            for l in links[:5]: # Mostrar solo los 5 primeros para no saturar
+            print(f"\n {doc} ({len(links)} identificados):")
+            # --- Filtro visual de terminal (solo mostramos 3) ---
+            for l in links[:3]: 
                 print(f"  - {l}")
         
-        print("\n Proceso finalizado con éxito.")
+        print("\n Proceso finalizado con éxito. Listo para entregar.")
