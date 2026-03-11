@@ -1,0 +1,12 @@
+# Python
+__pycache__/
+*.pyc
+
+# Resultados del pipeline
+output/
+*.png
+
+# Entornos virtuales
+venv/
+.venv/
+.uv/
